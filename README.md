@@ -1,19 +1,20 @@
 # TCP Connect Port Scanner
 
-A simple TCP Connect Port Scanner written in C that scans a range of TCP ports on a target host to determine whether they are open or closed. The project uses POSIX socket programming and DNS resolution with `gethostbyname()` to resolve hostnames before attempting TCP connections.
+A multi-threaded TCP Connect Port Scanner written in C that scans a range of TCP ports on a target host to determine whether they are open or closed. The scanner uses POSIX sockets for network communication, POSIX threads (`pthreads`) for concurrent scanning, and DNS resolution with `gethostbyname()` to resolve hostnames before attempting TCP connections.
 
-This project was built as a learning exercise to understand low-level networking, socket programming, and TCP communication in Linux.
+This project was built as a learning exercise to understand low-level networking, socket programming, multithreading, and TCP communication in Linux.
 
 ---
 
 ## Features
 
 - Scan a custom range of TCP ports
+- Multi-threaded scanning using POSIX Threads (`pthreads`)
 - Accepts both hostnames and IPv4 addresses
 - Resolves hostnames using `gethostbyname()`
 - Displays the resolved IP address before scanning
 - Uses TCP `connect()` to determine whether a port is open
-- Configurable connection timeout
+- Configurable socket timeout
 - Lightweight implementation using POSIX sockets
 
 ---
@@ -24,6 +25,7 @@ This project was built as a learning exercise to understand low-level networking
 - GCC
 - Linux
 - POSIX Socket API
+- POSIX Threads (pthreads)
 - TCP/IP Networking
 
 ---
@@ -38,10 +40,10 @@ tcp_port_scanner.c
 
 ## Compilation
 
-Compile the project using GCC:
+Compile using GCC with pthread support:
 
 ```bash
-gcc tcp_port_scanner.c -o tcp_port_scanner.out
+gcc tcp_port_scanner.c -o tcp_port_scanner.out -pthread
 ```
 
 ---
@@ -49,40 +51,69 @@ gcc tcp_port_scanner.c -o tcp_port_scanner.out
 ## Usage
 
 ```bash
-./tcp_port_scanner.c <hostname> <start_port> <end_port>
+./tcp_port_scanner.out <hostname> <start_port> <end_port>
 ```
 
-Example:
+### Example
 
 ```bash
-./tcp_port_scanner.out google.com 80 100
+./tcp_port_scanner.out scanme.nmap.org 20 100
 ```
 
-Example Output:
+---
+
+## Example Output
 
 ```
-Beginning the scan.....
+Beginning the scan!
 
-Hostname: google.com
-IP: 142.250.xxx.xxx
+Hostname: scanme.nmap.org
+IP: 45.33.xxx.xxx
 
-Port: 80 is UP....
-Port: 81 is DOWN....
-Port: 82 is DOWN....
-...
+Port:22 is up...
+Port:80 is up...
+Port:53 is up...
+
+Scan Complete
 ```
 
 ---
 
 ## How It Works
 
-1. Accepts a hostname or IP address from the command line.
+1. Accepts a hostname/IP address and port range from the command line.
 2. Resolves the hostname using `gethostbyname()`.
-3. Converts the resolved address into a socket address.
-4. Iterates through the specified port range.
-5. Creates a TCP socket for each port.
-6. Attempts to establish a TCP connection using `connect()`.
-7. Reports whether each port is open or closed.
+3. Divides the specified port range into four equal chunks.
+4. Creates four worker threads using `pthread_create()`.
+5. Each thread scans its assigned range independently.
+6. For each port:
+   - Creates a TCP socket.
+   - Sets socket send/receive timeouts.
+   - Attempts a TCP connection using `connect()`.
+   - Reports whether the port is open.
+7. The main thread waits for all worker threads to finish using `pthread_join()`.
+8. Prints **"Scan Complete"** when all threads have finished.
+
+---
+
+## Multithreading
+
+To improve scanning speed, the scanner splits the target port range into four equal sections.
+
+Each section is assigned to a separate thread, allowing multiple connection attempts to occur simultaneously.
+
+Example:
+
+```
+Ports 1–100
+
+Thread 1 → 1–25
+Thread 2 → 26–50
+Thread 3 → 51–75
+Thread 4 → 76–100
+```
+
+This significantly reduces the overall scan time compared to sequential scanning.
 
 ---
 
@@ -90,38 +121,44 @@ Port: 82 is DOWN....
 
 - Socket Programming
 - TCP/IP Networking
+- POSIX Threads (`pthread_create`, `pthread_join`)
 - DNS Resolution
 - `gethostbyname()`
 - `sockaddr_in`
 - `connect()`
 - `socket()`
+- Socket Timeouts (`setsockopt()`)
 - Network Byte Order (`htons()`)
-- Memory Management (`memcpy()`)
+- Memory Copy (`memcpy()`)
 - Command-Line Arguments
-- Connection Timeouts
 
 ---
 
 ## Limitations
 
-This project currently:
+Currently, the scanner:
 
 - Supports IPv4 only
-- Performs sequential (single-threaded) scanning
-- Detects only whether a TCP port is open or closed
-- Does not perform service detection or banner grabbing
+- Uses a fixed thread count (4 threads)
+- Detects only whether a TCP port is open
+- Does not identify running services
+- Does not perform banner grabbing
+- Does not support UDP scanning
 
 ---
 
 ## Future Improvements
 
-- Multi-threaded scanning
+- Configurable number of threads
 - IPv6 support using `getaddrinfo()`
 - Service detection
 - Banner grabbing
+- UDP port scanning
 - Custom timeout values
-- Better command-line options
-- Export scan results to a file
+- Better command-line argument parsing
+- Export results to CSV or JSON
+- Progress indicator
+- Graceful interruption using `Ctrl+C`
 
 ---
 
