@@ -31,7 +31,7 @@ This project was built as a learning exercise to understand low-level networking
 ## Project Structure
 
 ```
-creation.c
+tcp_port_scanner.c
 ```
 
 ---
@@ -41,7 +41,7 @@ creation.c
 Compile the project using GCC:
 
 ```bash
-gcc creation.c -o creation.out
+gcc tcp_port_scanner.c -o tcp_port_scanner.out
 ```
 
 ---
@@ -49,13 +49,13 @@ gcc creation.c -o creation.out
 ## Usage
 
 ```bash
-./creation.out <hostname> <start_port> <end_port>
+./tcp_port_scanner.c <hostname> <start_port> <end_port>
 ```
 
 Example:
 
 ```bash
-./creation.out google.com 80 100
+./tcp_port_scanner.out google.com 80 100
 ```
 
 Example Output:
