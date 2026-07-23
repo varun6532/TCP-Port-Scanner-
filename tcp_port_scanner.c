@@ -31,6 +31,17 @@ int main(int argc , char* argv[])
     memcpy(&server.sin_addr , host->h_addr_list[0] , host->h_length);
     int start_port = atoi(argv[2]);
     int end_port = atoi(argv[3]);
+    if(end_port < start_port || start_port <= 0  || end_port > 65535)
+    {
+        printf("Invalid port range.\n");
+        printf("Usage: %s <hostname> <start_port> <end_port>\n", argv[0]);
+        return 1;
+    }
+    else if(start_port == end_port)
+    {
+        printf("Give me a range of ports!\n");
+        return 1;
+    }
     printf("Beginning the scan.....\n");
     printf("Hostname:%s\n",host->h_name);
     printf("IP:%s\n",ip);
@@ -44,7 +55,7 @@ int main(int argc , char* argv[])
         }
         struct timeval timeout;
         server.sin_port = htons(port);
-        timeout.tv_sec = 2;
+        timeout.tv_sec = 1;
         timeout.tv_usec = 0 ;
         setsockopt(socket_desc , SOL_SOCKET  , SO_RCVTIMEO , &timeout , sizeof(timeout));
         setsockopt(socket_desc , SOL_SOCKET , SO_SNDTIMEO , &timeout , sizeof(timeout));
@@ -61,4 +72,5 @@ int main(int argc , char* argv[])
         close(socket_desc);
 
     }
+    printf("Scan Complete.\n");
 }
